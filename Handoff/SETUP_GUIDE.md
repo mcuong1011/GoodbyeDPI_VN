@@ -11,7 +11,8 @@ The settings below were chosen by testing 15+ GoodbyeDPI configurations on this 
 | File | What it does |
 |---|---|
 | `fix_dns_google.ps1` | **Step 1.** Points Windows DNS (IPv4 and IPv6) at Google DNS. Run once; the change is permanent. |
-| `3_steam_vn_dnsfix.cmd` | **Step 4.** Starts GoodbyeDPI with the tested settings (`-3` plus DNS redirect). |
+| `3_steam_vn_dnsfix.cmd` | **Step 4.** Starts GoodbyeDPI in the system tray with the tested settings (`-3` plus DNS redirect). |
+| `goodbyedpi_tray.exe` | The tray app that `3_steam_vn_dnsfix.cmd` starts. Runs GoodbyeDPI with no console window. Source and `build.cmd` are in `tray\`. |
 | `service_install_steam.cmd` | *Optional, Step 6.* Installs GoodbyeDPI as a Windows service so it starts automatically at boot. |
 | `service_remove.cmd` | Removes the GoodbyeDPI service and the WinDivert driver. |
 | `x86_64\`, `x86\` | The GoodbyeDPI 0.2.2 program and WinDivert driver (64-bit and 32-bit). The `.cmd` files pick the right one automatically. |
@@ -84,10 +85,13 @@ Repeat for Wi-Fi if you use it.
 
 ## Step 3: Start GoodbyeDPI with the Steam settings
 
-1. Right-click **`3_steam_vn_dnsfix.cmd`** and choose **Run as administrator**. Click **Yes** on the UAC prompt.
-2. A console window opens and prints GoodbyeDPI's settings, then stays open. **Leave it open.** Closing it stops GoodbyeDPI.
+1. Double-click **`3_steam_vn_dnsfix.cmd`**. Click **Yes** on the UAC prompt.
+2. No window stays open. GoodbyeDPI runs in the background with an icon in the system tray (bottom-right, next to the clock; it may be under the **^** overflow arrow). A notification says it's running.
+   - **Right-click the icon** to **Stop** / **Start** GoodbyeDPI, open **Show log**, or **Exit**. Exit stops GoodbyeDPI.
+   - The icon turns grey when GoodbyeDPI is stopped. If it stops on its own, a notification appears; click it to see the log.
+   - Tip: drag the icon out of the overflow onto the taskbar to keep it visible.
 
-The command it runs:
+The command it runs (the arguments live in `3_steam_vn_dnsfix.cmd`; running `goodbyedpi_tray.exe` directly uses the same ones):
 
 ```
 goodbyedpi.exe -3 --dns-addr 8.8.8.8 --dns-port 53 --dnsv6-addr 2001:4860:4860::8888 --dnsv6-port 53
@@ -127,7 +131,7 @@ Any number other than `000` means the connection worked (`200`, `302`, `403`, `4
 Instead of running the `.cmd` every time, install it as a Windows service.
 
 1. Move this folder to its permanent location first (the service stores the path).
-2. Close any GoodbyeDPI window from Step 4.
+2. Exit the GoodbyeDPI tray icon from Step 3 (right-click → **Exit**). The tray app and the service can't run at the same time; the tray app refuses to start while the service is running.
 3. Right-click **`service_install_steam.cmd`** → **Run as administrator** → press any key when asked.
 4. You should see `[SC] CreateService SUCCESS` and the service start.
 
@@ -147,13 +151,14 @@ From now on GoodbyeDPI runs in the background at every boot, with no window.
 | Store loads but checkout / downloads fail | GoodbyeDPI isn't running, or DNSveil's copy is running alongside it. Re-check Steps 3–4. |
 | `-3` stops working one day (ISP changed something) | Edit `3_steam_vn_dnsfix.cmd` and replace `-3` with `-1`, then `-2`. Those use the same window-size method. Newer modes `-5`, `-6` and `-9` did **not** get through on this network. |
 | No internet at all after Step 2 | DNS over HTTPS can't reach Google. In the DNS edit dialog, set **Fallback to plaintext** on, or set DNS over HTTPS to **Off**. |
-| `goodbyedpi.exe` window closes instantly | It wasn't run as administrator, or antivirus quarantined `WinDivert64.sys`. Add an exclusion for this folder. |
-| Some sites act strange while GoodbyeDPI runs | Close the GoodbyeDPI window (or stop the service) to check. It only touches web traffic (ports 80/443). |
+| Tray icon goes grey right after starting ("GoodbyeDPI stopped") | Right-click the icon → **Show log** for the error. Usually antivirus quarantined `WinDivert64.sys`; add an exclusion for this folder. |
+| "The GoodbyeDPI service is already running" | The Step 5 service is installed. Use one or the other: keep the service, or run `service_remove.cmd` as admin and use the tray. |
+| Some sites act strange while GoodbyeDPI runs | Right-click the tray icon → **Stop** (or stop the service) to check. It only touches web traffic (ports 80/443). |
 | Steam is slow to download | The fastest path is your ISP's local cache (~25–33 MB/s in testing), which you get when DNS is Google. Make sure Step 1 is in place. |
 
 ### Undo everything
 
-1. Stop GoodbyeDPI: close its window, or run `service_remove.cmd` as admin if you installed the service.
+1. Stop GoodbyeDPI: right-click its tray icon → **Exit**, or run `service_remove.cmd` as admin if you installed the service.
 2. Reset DNS to automatic (PowerShell as admin):
 
    ```
