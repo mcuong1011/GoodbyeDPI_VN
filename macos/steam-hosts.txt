@@ -1,0 +1,7 @@
+steampowered.com
+steamcommunity.com
+steamcontent.com
+steamstatic.com
+steamserver.net
+steamusercontent.com
+steamcdn-a.akamaihd.net

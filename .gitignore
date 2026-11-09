@@ -1,0 +1,4 @@
+.DS_Store
+macos/build/
+__pycache__/
+*.pyc
