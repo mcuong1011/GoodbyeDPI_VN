@@ -2,7 +2,7 @@
 
 A step-by-step guide to getting Steam working again on a network where the ISP blocks it: store browsing, checkout, and game downloads, all without DNSveil.
 
-The settings below were chosen by testing 15+ GoodbyeDPI configurations on this network (October 2026). See [Why these settings](#why-these-settings) at the end.
+The settings below were chosen by testing 15+ GoodbyeDPI configurations on this network (October 2026), and re-tested in November 2026 after the ISP changed its blocking (`-3` stopped working; `-1` is now the only mode that gets through). See [Why these settings](#why-these-settings) at the end.
 
 ---
 
@@ -11,7 +11,7 @@ The settings below were chosen by testing 15+ GoodbyeDPI configurations on this 
 | File | What it does |
 |---|---|
 | `fix_dns_google.ps1` | **Step 1.** Points Windows DNS (IPv4 and IPv6) at Google DNS. Run once; the change is permanent. |
-| `3_steam_vn_dnsfix.cmd` | **Step 4.** Starts GoodbyeDPI in the system tray with the tested settings (`-3` plus DNS redirect). |
+| `3_steam_vn_dnsfix.cmd` | **Step 4.** Starts GoodbyeDPI in the system tray with the tested settings (`-1` plus DNS redirect). |
 | `goodbyedpi_tray.exe` | The tray app that `3_steam_vn_dnsfix.cmd` starts. Runs GoodbyeDPI with no console window. Source and `build.cmd` are in `tray\`. |
 | `service_install_steam.cmd` | *Optional, Step 6.* Installs GoodbyeDPI as a Windows service so it starts automatically at boot. |
 | `service_remove.cmd` | Removes the GoodbyeDPI service and the WinDivert driver. |
@@ -27,7 +27,7 @@ The settings below were chosen by testing 15+ GoodbyeDPI configurations on this 
 The ISP blocks Steam in two ways:
 
 1. **DNS block.** The router's DNS (including its IPv6 DNS `fe80::1`) answers `127.0.0.1` for every Steam domain. That makes Steam "not exist". Setting only IPv4 DNS to 8.8.8.8 is **not enough**, because Windows keeps asking the router over IPv6.
-2. **Connection (SNI/DPI) block.** Some Steam servers have their secure connection cut mid-handshake: `checkout.steampowered.com`, `help.steampowered.com`, `cdn.fastly.steamstatic.com` and the game download servers `*.steamcontent.com`. Only GoodbyeDPI mode `-3` got through all of these.
+2. **Connection (SNI/DPI) block.** Some Steam servers have their secure connection cut mid-handshake. As of November 2026 that is `steamcommunity.com` (profile, Community tab: Steam shows "Error Code: -101") and `store.steampowered.com`. In October it was `checkout.steampowered.com`, `help.steampowered.com`, `cdn.fastly.steamstatic.com` and `*.steamcontent.com` instead. GoodbyeDPI mode `-1` gets through the current block; `-3`, `-5`, `-6` and the `--native-frag` / `--wrong-chksum` / `--wrong-seq` / `--set-ttl` / `--auto-ttl` variants do not.
 
 Steps 1–2 fix the DNS block. Steps 3–5 fix the connection block.
 
@@ -94,12 +94,12 @@ Repeat for Wi-Fi if you use it.
 The command it runs (the arguments live in `3_steam_vn_dnsfix.cmd`; running `goodbyedpi_tray.exe` directly uses the same ones):
 
 ```
-goodbyedpi.exe -3 --dns-addr 8.8.8.8 --dns-port 53 --dnsv6-addr 2001:4860:4860::8888 --dnsv6-port 53
+goodbyedpi.exe -1 --dns-addr 8.8.8.8 --dns-port 53 --dnsv6-addr 2001:4860:4860::8888 --dnsv6-port 53
 ```
 
 | Part | Meaning |
 |---|---|
-| `-3` | Legacy modeset = `-p -r -s -e 40`: blocks the ISP's injected resets, tweaks HTTP headers, and splits HTTPS handshakes into 40-byte pieces using TCP window sizing. This was the only mode that opened checkout, help, Fastly and the download servers. |
+| `-1` | Legacy modeset = `-p -r -s -f 2 -k 2 -n -e 2`: blocks the ISP's injected resets, tweaks HTTP headers, and splits HTTPS handshakes after the first 2 bytes using TCP window sizing. Since November 2026 this is the only mode that opens steamcommunity.com and the store (`-3`, which splits at 40 bytes, no longer does). |
 | `--dns-addr` / `--dnsv6-addr` | Safety net: forces any leftover plain DNS (IPv4 and IPv6) to Google, in case Windows or an app still asks the router. Harmless if Step 1/2 already handle DNS. |
 
 You need GoodbyeDPI running whenever you use Steam. If you don't want to start it by hand each time, use Step 6.
@@ -111,8 +111,9 @@ You need GoodbyeDPI running whenever you use Steam. If you don't want to start i
 **Quick check in a browser:** open these. All should load:
 
 - https://store.steampowered.com/
-- https://checkout.steampowered.com/ (blocked without `-3`)
-- https://help.steampowered.com/ (blocked without `-3`)
+- https://steamcommunity.com/ (blocked without `-1`)
+- https://checkout.steampowered.com/
+- https://help.steampowered.com/
 
 **Optional command-line check:** in PowerShell (no admin needed):
 
@@ -149,7 +150,7 @@ From now on GoodbyeDPI runs in the background at every boot, with no window.
 |---|---|
 | Step 1 lookups still show `127.0.0.1` | Run `ipconfig /flushdns` as admin and check again. Make sure you're on the adapter the script set (it only touches `Ethernet` and `Wi-Fi`; if your adapter has another name, e.g. `Ethernet 2`, edit `$adapters` in the script). |
 | Store loads but checkout / downloads fail | GoodbyeDPI isn't running, or DNSveil's copy is running alongside it. Re-check Steps 3–4. |
-| `-3` stops working one day (ISP changed something) | Edit `3_steam_vn_dnsfix.cmd` and replace `-3` with `-1`, then `-2`. Those use the same window-size method. Newer modes `-5`, `-6` and `-9` did **not** get through on this network. |
+| `-1` stops working one day (ISP changed something), or Steam shows "Error Code: -101" | Edit `3_steam_vn_dnsfix.cmd` (and `service_install_steam.cmd` if you use the service) and try `-2`, then `-3`. Those use the same window-size method. In November 2026 `-3` had stopped working and `-1` fixed it; `-5`, `-6` and the fake-packet options did **not** get through. |
 | No internet at all after Step 2 | DNS over HTTPS can't reach Google. In the DNS edit dialog, set **Fallback to plaintext** on, or set DNS over HTTPS to **Off**. |
 | Tray icon goes grey right after starting ("GoodbyeDPI stopped") | Right-click the icon → **Show log** for the error. Usually antivirus quarantined `WinDivert64.sys`; add an exclusion for this folder. |
 | "The GoodbyeDPI service is already running" | The Step 5 service is installed. Use one or the other: keep the service, or run `service_remove.cmd` as admin and use the tray. |

@@ -20,7 +20,7 @@ using System.Windows.Forms;
 
 static class Program
 {
-    const string DefaultArgs = "-3 --dns-addr 8.8.8.8 --dns-port 53 --dnsv6-addr 2001:4860:4860::8888 --dnsv6-port 53";
+    const string DefaultArgs = "-1 --dns-addr 8.8.8.8 --dns-port 53 --dnsv6-addr 2001:4860:4860::8888 --dnsv6-port 53";
 
     [STAThread]
     static void Main()

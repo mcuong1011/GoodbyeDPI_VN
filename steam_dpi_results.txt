@@ -1,0 +1,22 @@
+﻿11/25/2026 22:23:03
+
+Config                                                                     community store checkout help google
+------                                                                     --------- ----- -------- ---- ------
+(none)                                                                     --        --    OK       OK   OK    
+-3                                                                         --        --    OK       OK   OK    
+-1                                                                         OK        OK    OK       OK   OK    
+-5                                                                         --        --    OK       OK   OK    
+-6                                                                         --        --    OK       OK   OK    
+-p -r -s -e 1 --native-frag                                                --        --    OK       OK   OK    
+-p -r -s -e 2 --native-frag --reverse-frag                                 --        --    OK       OK   OK    
+-p -r -s -f 2 -e 2 --native-frag --reverse-frag --wrong-chksum             --        --    OK       OK   OK    
+-p -r -s -f 2 -e 2 --native-frag --reverse-frag --wrong-seq                --        --    OK       OK   OK    
+-p -r -s -f 2 -e 2 --native-frag --reverse-frag --wrong-chksum --wrong-seq --        --    OK       OK   OK    
+-p -r -s -f 2 -e 2 --native-frag --reverse-frag --auto-ttl                 --        --    OK       OK   OK    
+-p -r -s -f 2 -e 2 --native-frag --reverse-frag --set-ttl 2                --        --    OK       OK   OK    
+-p -r -s -f 2 -e 2 --native-frag --reverse-frag --set-ttl 3                --        --    OK       OK   OK    
+-p -r -s -f 2 -e 2 --native-frag --reverse-frag --set-ttl 4                --        --    OK       OK   OK    
+
+
+
+Best: -1
